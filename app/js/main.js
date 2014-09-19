@@ -48,8 +48,6 @@ function loadServerPosition(ip){
 
 $(function(){
 
-    console.log("on document load !");
-
    function getCoordinates(){
         return {
             lat1: parseFloat($("#location #lat1").text()),

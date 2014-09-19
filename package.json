@@ -1,0 +1,16 @@
+{ 
+	"name" : "ping-speedometer",
+	"version" : "0.1.0",
+	"author": "Brandon Jackson",
+	"repository": "https://github.com/brandonjackson/ping-speedometer",
+	"dependencies" : { 
+		"express" : "4.x",
+		"underscore": ">= 1.6.0",
+		"q": "1.x",
+		"morgan": "1.3.x"
+	},
+	"scripts":{
+		"prestart": "browserify app/js/main.js > app/js/bundle.js",
+		"start": "node server.js"
+	}
+}

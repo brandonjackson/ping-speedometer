@@ -1,10 +1,10 @@
+#!/usr/bin/env node
+
 var path = require('path'),
     express = require('express'),
     logger = require('morgan'),
     sys = require('sys'),
     exec = require('child_process').exec,
-    Q = require('q'),
-    _ = require('underscore'),
     Ping = require('./ping');
 
 var app = express();
@@ -24,7 +24,7 @@ app.get('/ping/:target', function(req, res){
      })
      .catch(function(error){
         console.log(error)
-        res.send(504, 'ping error');
+        res.status(504).send('ping error');
      });
 });
 
