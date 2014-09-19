@@ -51,30 +51,28 @@ $(function(){
 
    function getCoordinates(){
         return {
-            lat1: parseFloat($("#location #lat1").text()),
-            lon1: parseFloat($("#location #lon1").text()),
-            lat2: parseFloat($("#results #lat2").text()),
-            lon2: parseFloat($("#results #lon2").text())
+            lat1: parseFloat($("#details #lat1").text()),
+            lon1: parseFloat($("#details #lon1").text()),
+            lat2: parseFloat($("#details #lat2").text()),
+            lon2: parseFloat($("#details #lon2").text())
         };
     }
 
     function showCurrentPosition(position) {
-        $("#location #lat1").text(position.coords.latitude);
-        $("#location #lon1").text(position.coords.longitude);
-        //$("#location").fadeIn();
+        $("#details #lat1").text(position.coords.latitude);
+        $("#details #lon1").text(position.coords.longitude);
     }
 
     function showPingResults(results){
-        $("#results #url").text(results.url);
-        $("#results #ip").text(results.ip);
-        $("#results #avg").text(results.avg);
-        $("#results #text").text(results.text);
-        //$("#results").fadeIn();
+        $("#details #url").text(results.url);
+        $("#details #ip").text(results.ip);
+        $("#details #avg").text(results.avg);
+        $("#details #text").text(results.text);
     }
 
     function showServerPosition(position){
-        $("#results #lat2").text(position.latitude);
-        $("#results #lon2").text(position.longitude);
+        $("#details #lat2").text(position.latitude);
+        $("#details #lon2").text(position.longitude);
     }
 
     function showVisualizations(results,coords){
@@ -93,10 +91,10 @@ $(function(){
     }
 
     function showSpeedometerResults(results){
-        $("#speedometer #distance").text(results.distance + ' meters');
-        $("#speedometer #speed").text(results.speed + " m/s");
-        $("#speedometer #c").text(results.fractionOfC);
-        //$("#speedometer").fadeIn();
+        $("#details #distance").text(results.distance + ' meters');
+        $("#details #speed").text(results.speed + " m/s");
+        $("#details #c").text(results.fractionOfC);
+        
     }
 
     function showMap(coords){
@@ -147,12 +145,15 @@ $(function(){
                 var c = 200000000; // m/s
                 var coords = getCoordinates();
                 var results = {};
-                results.distance = calculateDistance(coords.lat1, coords.lon1, coords.lat2, coords.lon2);
-                results.speed = (results.distance / (parseFloat($("#results #avg").text()) / 1000)),
+
+                // since ping measures round trip time, multiply distance by 2
+                results.distance = 2*calculateDistance(coords.lat1, coords.lon1, coords.lat2, coords.lon2);
+                results.speed = (results.distance / (parseFloat($("#details #avg").text()) / 1000)),
                 results.fractionOfC = results.speed / c;
 
                 showVisualizations(results, coords);
                 reenableForm();
+                $("#details").slideDown();
             })
             .catch(showError)
             .done();
