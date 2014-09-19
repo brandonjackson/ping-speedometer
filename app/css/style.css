@@ -1,0 +1,9 @@
+.container{
+	width: 750px;
+}
+.row#form{
+	margin-top: 20px;
+}
+.row#visualizations{
+	margin-top: 50px;
+}
