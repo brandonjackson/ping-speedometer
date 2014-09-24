@@ -1,49 +1,10 @@
 var _ = require('underscore'),
-    Q = require('q');
-
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  var R = 6374477; // Radius of the earth in meters
-  var dLat = (lat2 - lat1) * Math.PI / 180;  // deg2rad below
-  var dLon = (lon2 - lon1) * Math.PI / 180;
-  var a = 
-     0.5 - Math.cos(dLat)/2 + 
-     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-     (1 - Math.cos(dLon))/2;
-
-  return R * 2 * Math.asin(Math.sqrt(a));
-}
-
-function loadCurrentPosition(){
-    var deferred = Q.defer();
-    var options = {
-        enableHighAccuracy: false,
-        timeout: 5000,
-    };
-    if(navigator.geolocation){
-        navigator.geolocation.getCurrentPosition(
-            function(position){
-                deferred.resolve(position);
-            },
-            function(error){
-                console.log('getCurrentPosition error!');
-                console.log(error);
-                deferred.reject(error);
-            },
-            options
-        );
-    } else {
-        deferred.reject(new Error("Browser location services unavailable"));
-    }
-    return deferred.promise;
-}
+    Q = require('q'),
+    geo = require('./geo');
 
 function loadPingResults(url){
     console.log("loadPingResults(): pinging "+url);
     return Q($.getJSON("/ping/"+url));
-}
-
-function loadServerPosition(ip){
-    return Q($.getJSON("http://freegeoip.net/json/"+ip));
 }
 
 $(function(){
@@ -108,10 +69,9 @@ $(function(){
         $("img#map").attr("src",url);
     }
 
-    function showError(error){
-        console.log("Error Occurred!");
-        console.log(error);
-        var alertMessage = $("<div class='alert alert-danger' role='alert'>" + error.message + "</div>");
+    function showError(message){
+        console.log("showError()" + message);
+        var alertMessage = $("<div class='alert alert-danger' role='alert'>" + message + "</div>");
         $("h1").after(alertMessage);
         reenableForm();
     }
@@ -127,7 +87,9 @@ $(function(){
         $("#server-form input[type=submit]").val("Ping");
     }
 
-    loadCurrentPosition().then(showCurrentPosition, showError);
+    geo.loadCurrentPosition().then(showCurrentPosition, function(error){
+        showError("Error: Could not load your current position");
+    });
 
     $("#server-form").on("submit",function(e){
         e.preventDefault();
@@ -136,7 +98,7 @@ $(function(){
         loadPingResults(target)
             .then(function(pingResults){
                 showPingResults(pingResults);
-                return loadServerPosition(pingResults.ip);
+                return geo.loadServerPosition(pingResults.ip);
             })
             .then(function(serverPosition){
                 showServerPosition(serverPosition);
@@ -146,7 +108,7 @@ $(function(){
                 var results = {};
 
                 // since ping measures round trip time, multiply distance by 2
-                results.distance = 2*calculateDistance(coords.lat1, coords.lon1, coords.lat2, coords.lon2);
+                results.distance = 2*geo.calculateDistance(coords.lat1, coords.lon1, coords.lat2, coords.lon2);
                 results.speed = (results.distance / (parseFloat($("#details #avg").text()) / 1000)),
                 results.fractionOfC = results.speed / c;
 

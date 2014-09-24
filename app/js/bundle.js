@@ -2,7 +2,8 @@
 var _ = require('underscore'),
     Q = require('q');
 
-function calculateDistance(lat1, lon1, lat2, lon2) {
+
+exports.calculateDistance = function(lat1, lon1, lat2, lon2) {
   var R = 6374477; // Radius of the earth in meters
   var dLat = (lat2 - lat1) * Math.PI / 180;  // deg2rad below
   var dLon = (lon2 - lon1) * Math.PI / 180;
@@ -12,9 +13,9 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
      (1 - Math.cos(dLon))/2;
 
   return R * 2 * Math.asin(Math.sqrt(a));
-}
+};
 
-function loadCurrentPosition(){
+exports.loadCurrentPosition = function(){
     var deferred = Q.defer();
     var options = {
         enableHighAccuracy: false,
@@ -36,15 +37,20 @@ function loadCurrentPosition(){
         deferred.reject(new Error("Browser location services unavailable"));
     }
     return deferred.promise;
-}
+};
+
+exports.loadServerPosition = function(ip){
+    return Q($.getJSON("http://freegeoip.net/json/" + ip));
+};
+
+},{"q":3,"underscore":4}],2:[function(require,module,exports){
+var _ = require('underscore'),
+    Q = require('q'),
+    geo = require('./geo');
 
 function loadPingResults(url){
     console.log("loadPingResults(): pinging "+url);
     return Q($.getJSON("/ping/"+url));
-}
-
-function loadServerPosition(ip){
-    return Q($.getJSON("http://freegeoip.net/json/"+ip));
 }
 
 $(function(){
@@ -109,10 +115,9 @@ $(function(){
         $("img#map").attr("src",url);
     }
 
-    function showError(error){
-        console.log("Error Occurred!");
-        console.log(error);
-        var alertMessage = $("<div class='alert alert-danger' role='alert'>" + error.message + "</div>");
+    function showError(message){
+        console.log("showError()" + message);
+        var alertMessage = $("<div class='alert alert-danger' role='alert'>" + message + "</div>");
         $("h1").after(alertMessage);
         reenableForm();
     }
@@ -128,7 +133,9 @@ $(function(){
         $("#server-form input[type=submit]").val("Ping");
     }
 
-    loadCurrentPosition().then(showCurrentPosition, showError);
+    geo.loadCurrentPosition().then(showCurrentPosition, function(error){
+        showError("Error: Could not load your current position");
+    });
 
     $("#server-form").on("submit",function(e){
         e.preventDefault();
@@ -137,7 +144,7 @@ $(function(){
         loadPingResults(target)
             .then(function(pingResults){
                 showPingResults(pingResults);
-                return loadServerPosition(pingResults.ip);
+                return geo.loadServerPosition(pingResults.ip);
             })
             .then(function(serverPosition){
                 showServerPosition(serverPosition);
@@ -147,7 +154,7 @@ $(function(){
                 var results = {};
 
                 // since ping measures round trip time, multiply distance by 2
-                results.distance = 2*calculateDistance(coords.lat1, coords.lon1, coords.lat2, coords.lon2);
+                results.distance = 2*geo.calculateDistance(coords.lat1, coords.lon1, coords.lat2, coords.lon2);
                 results.speed = (results.distance / (parseFloat($("#details #avg").text()) / 1000)),
                 results.fractionOfC = results.speed / c;
 
@@ -161,7 +168,7 @@ $(function(){
 });
 
 
-},{"q":2,"underscore":3}],2:[function(require,module,exports){
+},{"./geo":1,"q":3,"underscore":4}],3:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -2069,7 +2076,7 @@ return Q;
 });
 
 }).call(this,require('_process'))
-},{"_process":4}],3:[function(require,module,exports){
+},{"_process":5}],4:[function(require,module,exports){
 //     Underscore.js 1.7.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -3486,7 +3493,7 @@ return Q;
   }
 }.call(this));
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -3551,4 +3558,4 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}]},{},[1]);
+},{}]},{},[2]);
