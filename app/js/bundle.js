@@ -1,52 +1,7 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var _ = require('underscore'),
-    Q = require('q');
-
-
-exports.calculateDistance = function(lat1, lon1, lat2, lon2) {
-  var R = 6374477; // Radius of the earth in meters
-  var dLat = (lat2 - lat1) * Math.PI / 180;  // deg2rad below
-  var dLon = (lon2 - lon1) * Math.PI / 180;
-  var a = 
-     0.5 - Math.cos(dLat)/2 + 
-     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-     (1 - Math.cos(dLon))/2;
-
-  return R * 2 * Math.asin(Math.sqrt(a));
-};
-
-exports.loadCurrentPosition = function(){
-    var deferred = Q.defer();
-    var options = {
-        enableHighAccuracy: false,
-        timeout: 5000,
-    };
-    if(navigator.geolocation){
-        navigator.geolocation.getCurrentPosition(
-            function(position){
-                deferred.resolve(position);
-            },
-            function(error){
-                console.log('getCurrentPosition error!');
-                console.log(error);
-                deferred.reject(error);
-            },
-            options
-        );
-    } else {
-        deferred.reject(new Error("Browser location services unavailable"));
-    }
-    return deferred.promise;
-};
-
-exports.loadServerPosition = function(ip){
-    return Q($.getJSON("http://freegeoip.net/json/" + ip));
-};
-
-},{"q":3,"underscore":4}],2:[function(require,module,exports){
-var _ = require('underscore'),
     Q = require('q'),
-    geo = require('./geo');
+    geo = require('../../geo');
 
 function loadPingResults(url){
     console.log("loadPingResults(): pinging "+url);
@@ -57,10 +12,10 @@ $(function(){
 
    function getCoordinates(){
         return {
-            lat1: parseFloat($("#details #lat1").text()),
-            lon1: parseFloat($("#details #lon1").text()),
-            lat2: parseFloat($("#details #lat2").text()),
-            lon2: parseFloat($("#details #lon2").text())
+            lat1: parseFloat($("#details #lat1").html()),
+            lon1: parseFloat($("#details #lon1").html()),
+            lat2: parseFloat($("#details #lat2").html()),
+            lon2: parseFloat($("#details #lon2").html())
         };
     }
 
@@ -147,6 +102,9 @@ $(function(){
                 return geo.loadServerPosition(pingResults.ip);
             })
             .then(function(serverPosition){
+
+                console.log(serverPosition);
+
                 showServerPosition(serverPosition);
 
                 var c = 200000000; // m/s
@@ -168,7 +126,55 @@ $(function(){
 });
 
 
-},{"./geo":1,"q":3,"underscore":4}],3:[function(require,module,exports){
+},{"../../geo":2,"q":3,"underscore":4}],2:[function(require,module,exports){
+var _ = require('underscore'),
+    Q = require('q');
+
+
+exports.calculateDistance = function(lat1, lon1, lat2, lon2) {
+  var R = 6374477; // Radius of the earth in meters
+  var dLat = (lat2 - lat1) * Math.PI / 180;  // deg2rad below
+  var dLon = (lon2 - lon1) * Math.PI / 180;
+  var a = 
+     0.5 - Math.cos(dLat)/2 + 
+     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+     (1 - Math.cos(dLon))/2;
+
+  return R * 2 * Math.asin(Math.sqrt(a));
+};
+
+exports.loadCurrentPosition = function(){
+// Gets users location using using HTML5's built-in getCurrentPosition function
+// Returns a Q promise
+
+    var deferred = Q.defer();
+    var options = {
+        enableHighAccuracy: false,
+        timeout: 5000,
+    };
+    if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(
+            function(position){
+                deferred.resolve(position);
+            },
+            function(error){
+                console.log('getCurrentPosition error!');
+                console.log(error);
+                deferred.reject(error);
+            },
+            options
+        );
+    } else {
+        deferred.reject(new Error("Browser location services unavailable"));
+    }
+    return deferred.promise;
+};
+
+exports.loadServerPosition = function(ip){
+    return Q($.getJSON("http://freegeoip.net/json/" + ip));
+};
+
+},{"q":3,"underscore":4}],3:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -3558,4 +3564,4 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}]},{},[2]);
+},{}]},{},[1]);

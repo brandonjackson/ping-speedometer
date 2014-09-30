@@ -1,6 +1,6 @@
 var _ = require('underscore'),
     Q = require('q'),
-    geo = require('./geo');
+    geo = require('../../geo');
 
 function loadPingResults(url){
     console.log("loadPingResults(): pinging "+url);
@@ -11,10 +11,10 @@ $(function(){
 
    function getCoordinates(){
         return {
-            lat1: parseFloat($("#details #lat1").text()),
-            lon1: parseFloat($("#details #lon1").text()),
-            lat2: parseFloat($("#details #lat2").text()),
-            lon2: parseFloat($("#details #lon2").text())
+            lat1: parseFloat($("#details #lat1").html()),
+            lon1: parseFloat($("#details #lon1").html()),
+            lat2: parseFloat($("#details #lat2").html()),
+            lon2: parseFloat($("#details #lon2").html())
         };
     }
 
@@ -101,6 +101,9 @@ $(function(){
                 return geo.loadServerPosition(pingResults.ip);
             })
             .then(function(serverPosition){
+
+                console.log(serverPosition);
+
                 showServerPosition(serverPosition);
 
                 var c = 200000000; // m/s
