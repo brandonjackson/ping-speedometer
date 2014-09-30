@@ -1,6 +1,7 @@
 var _ = require('underscore'),
     Q = require('q'),
-    geo = require('../../geo');
+    geo = require('../../geo'),
+    Backbone = require('backbone');
 
 function loadPingResults(url){
     console.log("loadPingResults(): pinging "+url);
