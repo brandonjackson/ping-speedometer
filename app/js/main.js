@@ -3,6 +3,56 @@ var _ = require('underscore'),
     geo = require('../../geo'),
     Backbone = require('backbone');
 
+var PingModel = Backbone.Model.extend({
+    getResults: function(userLocation, serverLocation){
+        var c = 200000000; // m/s, speed of light in fiber
+
+        // since ping measures round trip time, multiply distance by 2
+        var distance = 2 * userLocation.distanceTo(serverLocation);//geo.calculateDistance(coords.lat1, coords.lon1, coords.lat2, coords.lon2);
+        var speed = (distance / (this.get('avg') / 1000));
+        return {
+            distance: distance,
+            speed: speed,
+            fractionOfC: speed / c
+        };
+    }
+});
+
+var LocationModel = Backbone.Model.extend({
+    setFromWebkitGeolocation: function(position){
+        console.log("LocationModel.setFromWebkitGeolocation()");
+        this.set({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+        });
+    },
+    setFromServer: function(result){
+        console.log("LocationModel.setFromServer()");
+        this.set({
+            latitude: result.latitude,
+            longitude: result.longitude,
+            city: result.city,
+            country: result.country_name
+        });
+    },
+    distanceTo: function(location2){
+        var R = 6374477; // Radius of the earth in meters
+        var dLat = (location2.get('latitude') - this.get('latitude')) * Math.PI / 180;  // deg2rad below
+        var dLon = (location2.get('longitude') - this.get('longitude')) * Math.PI / 180;
+        var a = 
+            0.5 - Math.cos(dLat)/2 + 
+            Math.cos(this.get('latitude') * Math.PI / 180) * Math.cos(location2.get('latitude') * Math.PI / 180) * 
+            (1 - Math.cos(dLon))/2;
+
+        return R * 2 * Math.asin(Math.sqrt(a));
+    }
+});
+
+var userLocation    = new LocationModel(),
+    serverLocation  = new LocationModel(),
+    ping            = new PingModel();
+
+
 function loadPingResults(url){
     console.log("loadPingResults(): pinging "+url);
     return Q($.getJSON("/ping/"+url));
