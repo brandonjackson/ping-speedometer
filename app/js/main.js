@@ -60,35 +60,27 @@ function loadPingResults(url){
 
 $(function(){
 
-   function getCoordinates(){
-        return {
-            lat1: parseFloat($("#details #lat1").html()),
-            lon1: parseFloat($("#details #lon1").html()),
-            lat2: parseFloat($("#details #lat2").html()),
-            lon2: parseFloat($("#details #lon2").html())
-        };
-    }
+    userLocation.on("change", function(){
+        $("#details #userLocation .latitude").text(userLocation.get('latitude'));
+        $("#details #userLocation .longitude").text(userLocation.get('longitude'));
+    });
 
-    function showCurrentPosition(position) {
-        $("#details #lat1").text(position.coords.latitude);
-        $("#details #lon1").text(position.coords.longitude);
-    }
+    serverLocation.on("change", function(){
+        $("#details #serverLocation .latitude").text(serverLocation.get('latitude'));
+        $("#details #serverLocation .longitude").text(serverLocation.get('longitude'));
+    });
 
-    function showPingResults(results){
-        $("#details #url").text(results.url);
-        $("#details #ip").text(results.ip);
-        $("#details #avg").text(results.avg);
-        $("#details #text").text(results.text);
-    }
+    ping.on("change", function(){
+        $("#details #url").text(ping.get('url'));
+        $("#details #ip").text(ping.get('ip'));
+        $("#details #avg").text(ping.get('avg'));
+        $("#details #text").text(ping.get('text'));
+    })
 
-    function showServerPosition(position){
-        $("#details #lat2").text(position.latitude);
-        $("#details #lon2").text(position.longitude);
-    }
-
-    function showVisualizations(results,coords){
+    function showVisualizations(results){
+        console.log("showVisualizations()");
         showSpeedometerResults(results);
-        showMap(coords);
+        showMap();
         $("#visualizations").slideDown();
         $("#gauge").empty();
         var gauge = new JustGage({
@@ -105,15 +97,16 @@ $(function(){
         $("#details #distance").text(results.distance + ' meters');
         $("#details #speed").text(results.speed + " m/s");
         $("#details #c").text(results.fractionOfC);
-        
     }
 
-    function showMap(coords){
+    function showMap(){
         var endpoint = "http://maps.googleapis.com/maps/api/staticmap";
         var options = {
             size: "345x200",
             maptype: "satellite",
-            path: "color:0xff0000ff|weight:5|geodesic:true|" + coords.lat1 + "," + coords.lon1 + "|" + coords.lat2 + "," + coords.lon2
+            path: "color:0xff0000ff|weight:5|geodesic:true|" 
+                    + userLocation.get('latitude')+ "," + userLocation.get('longitude') + "|" 
+                    + serverLocation.get('latitude') + "," + serverLocation.get('longitude')
         };
         var url = endpoint + "?" + $.param(options);
         console.log("showMap(): static maps url = " + url);
@@ -138,7 +131,9 @@ $(function(){
         $("#server-form input[type=submit]").val("Ping");
     }
 
-    geo.loadCurrentPosition().then(showCurrentPosition, function(error){
+    geo.loadCurrentPosition().then(function(position){
+        userLocation.setFromWebkitGeolocation(position);
+    }, function(error){
         showError("Error: Could not load your current position");
     });
 
@@ -148,25 +143,12 @@ $(function(){
         disableForm();
         loadPingResults(target)
             .then(function(pingResults){
-                showPingResults(pingResults);
+                ping.set(pingResults);
                 return geo.loadServerPosition(pingResults.ip);
             })
             .then(function(serverPosition){
-
-                console.log(serverPosition);
-
-                showServerPosition(serverPosition);
-
-                var c = 200000000; // m/s
-                var coords = getCoordinates();
-                var results = {};
-
-                // since ping measures round trip time, multiply distance by 2
-                results.distance = 2*geo.calculateDistance(coords.lat1, coords.lon1, coords.lat2, coords.lon2);
-                results.speed = (results.distance / (parseFloat($("#details #avg").text()) / 1000)),
-                results.fractionOfC = results.speed / c;
-
-                showVisualizations(results, coords);
+                serverLocation.setFromServer(serverPosition);
+                showVisualizations(ping.getResults(userLocation, serverLocation));
                 reenableForm();
                 $("#details").slideDown();
             })
