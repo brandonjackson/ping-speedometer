@@ -7,3 +7,6 @@
 .row#visualizations{
 	margin-top: 50px;
 }
+#details ul{
+	padding-left: 0;
+}
